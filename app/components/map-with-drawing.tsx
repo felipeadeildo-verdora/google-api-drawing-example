@@ -12,6 +12,12 @@ interface MapWithDrawingProps {
   initialCenter?: { lat: number; lng: number }
 }
 
+// Função para centralizar mapa em um polígono específico
+let centerOnPolygon: (polygonId: string) => void
+
+// Exportar função para uso externo
+export const useCenterOnPolygon = () => centerOnPolygon
+
 export default function MapWithDrawing({ initialCenter }: MapWithDrawingProps) {
   const { isLoaded, loadError } = useGoogleMaps()
   
@@ -76,6 +82,19 @@ export default function MapWithDrawing({ initialCenter }: MapWithDrawingProps) {
 
   const handlePolygonClick = (polygonId: string) => {
     dispatch({ type: 'SELECT_POLYGON', payload: polygonId })
+    
+    // Encontrar o polígono selecionado
+    const selectedPolygon = state.polygons.find(p => p.id === polygonId)
+    if (selectedPolygon && selectedPolygon.coordinates.length > 0) {
+      const center = getPolygonCenter(selectedPolygon.coordinates)
+      setMapCenter(center)
+      setMapZoom(14)
+      
+      if (mapRef.current) {
+        mapRef.current.panTo(center)
+        mapRef.current.setZoom(14)
+      }
+    }
   }
 
   const getPolygonCenter = (coordinates: { lat: number; lng: number }[]) => {
@@ -99,6 +118,24 @@ export default function MapWithDrawing({ initialCenter }: MapWithDrawingProps) {
       mapRef.current.setZoom(15)
     }
   }
+
+  // Função para centralizar no polígono (pode ser chamada externamente)
+  const centerOnPolygonById = (polygonId: string) => {
+    const selectedPolygon = state.polygons.find(p => p.id === polygonId)
+    if (selectedPolygon && selectedPolygon.coordinates.length > 0) {
+      const center = getPolygonCenter(selectedPolygon.coordinates)
+      setMapCenter(center)
+      setMapZoom(14)
+      
+      if (mapRef.current) {
+        mapRef.current.panTo(center)
+        mapRef.current.setZoom(14)
+      }
+    }
+  }
+
+  // Disponibilizar a função globalmente
+  centerOnPolygon = centerOnPolygonById
 
   if (loadError) return <div className="text-red-500">Erro ao carregar mapa</div>
   if (!isLoaded) return <div className="text-gray-500">Carregando mapa...</div>

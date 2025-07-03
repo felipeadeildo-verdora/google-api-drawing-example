@@ -3,6 +3,7 @@ import { usePolygon } from '../lib/polygon-context'
 import { Button } from './ui/button'
 import { Input } from './ui/input'
 import { Trash2, Edit3, Save, X } from 'lucide-react'
+import { useCenterOnPolygon } from './map-with-drawing'
 
 const colors = [
   '#FF0000', '#00FF00', '#0000FF', '#FFFF00', '#FF00FF', '#00FFFF',
@@ -48,6 +49,12 @@ export default function PolygonManager() {
 
   const handlePolygonSelect = (polygonId: string) => {
     dispatch({ type: 'SELECT_POLYGON', payload: polygonId })
+    
+    // Centralizar mapa no polígono selecionado
+    const centerOnPolygon = useCenterOnPolygon()
+    if (centerOnPolygon) {
+      centerOnPolygon(polygonId)
+    }
   }
 
   if (state.polygons.length === 0) {

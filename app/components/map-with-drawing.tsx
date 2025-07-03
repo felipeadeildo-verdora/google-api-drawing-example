@@ -170,7 +170,7 @@ export default function MapWithDrawing({ initialCenter }: MapWithDrawingProps) {
         options={{
           streetViewControl: false,
           fullscreenControl: false,
-          mapTypeControl: false,
+          mapTypeControl: true,
           zoomControl: true,
           scaleControl: false,
           rotateControl: false

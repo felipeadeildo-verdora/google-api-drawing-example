@@ -21,7 +21,7 @@ export default function MapWithDrawing({ initialCenter }: MapWithDrawingProps) {
   const onMapLoad = useCallback((map: any) => {
     const drawingManager = new window.google.maps.drawing.DrawingManager({
       drawingMode: null,
-      drawingControl: true,
+      drawingControl: false,
       drawingControlOptions: {
         position: window.google.maps.ControlPosition.TOP_CENTER,
         drawingModes: [window.google.maps.drawing.OverlayType.POLYGON]
@@ -38,6 +38,7 @@ export default function MapWithDrawing({ initialCenter }: MapWithDrawingProps) {
     })
     
     drawingManager.setMap(map)
+    drawingManager.setDrawingMode(null)
     drawingManagerRef.current = drawingManager
 
     window.google.maps.event.addListener(drawingManager, 'polygoncomplete', (polygon: any) => {

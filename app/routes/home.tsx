@@ -1,6 +1,5 @@
 import { AlertTriangle, Key } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import AddressSearch from '../components/address-search'
 import MapWithDrawing from '../components/map-with-drawing'
 import PolygonManager from '../components/polygon-manager'
 import { Button } from '../components/ui/button'
@@ -17,7 +16,6 @@ export function meta({}: Route.MetaArgs) {
 }
 
 export default function Home() {
-  const [selectedPlace, setSelectedPlace] = useState<any>(null)
   const [apiKey, setApiKey] = useState('')
   const [apiKeyInput, setApiKeyInput] = useState('')
   const [showApiKeyForm, setShowApiKeyForm] = useState(false)
@@ -39,9 +37,6 @@ export default function Home() {
     }
   }
 
-  const handlePlaceSelected = (place: any) => {
-    setSelectedPlace(place)
-  }
 
   const handleChangeApiKey = () => {
     setApiKeyInput(apiKey)
@@ -120,22 +115,9 @@ export default function Home() {
               {apiKey && (
                 <GoogleMapsProvider apiKey={apiKey}>
                   <PolygonProvider>
-                    <div className="mb-6 flex justify-center">
-                      <AddressSearch onPlaceSelected={handlePlaceSelected} />
-                    </div>
-
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                       <div className="lg:col-span-2">
-                        <MapWithDrawing 
-                          initialCenter={
-                            selectedPlace?.geometry?.location 
-                              ? {
-                                  lat: selectedPlace.geometry.location.lat(),
-                                  lng: selectedPlace.geometry.location.lng()
-                                }
-                              : undefined
-                          }
-                        />
+                        <MapWithDrawing />
                       </div>
                       
                       <div className="lg:col-span-1">

@@ -1,4 +1,4 @@
-import { createContext, useContext, useReducer } from 'react'
+import { createContext, useContext, useReducer, useEffect } from 'react'
 import type { ReactNode } from 'react'
 
 export interface PolygonData {
@@ -21,6 +21,7 @@ type PolygonAction =
   | { type: 'DELETE_POLYGON'; payload: string }
   | { type: 'SELECT_POLYGON'; payload: string | null }
   | { type: 'TOGGLE_DRAWING_MODE' }
+  | { type: 'LOAD_POLYGONS'; payload: PolygonData[] }
 
 const initialState: PolygonState = {
   polygons: [],
@@ -31,13 +32,15 @@ const initialState: PolygonState = {
 function polygonReducer(state: PolygonState, action: PolygonAction): PolygonState {
   switch (action.type) {
     case 'ADD_POLYGON':
-      return {
+      const newState = {
         ...state,
         polygons: [...state.polygons, action.payload],
         drawingMode: false
       }
+      localStorage.setItem('saved-polygons', JSON.stringify(newState.polygons))
+      return newState
     case 'UPDATE_POLYGON':
-      return {
+      const updatedState = {
         ...state,
         polygons: state.polygons.map(polygon =>
           polygon.id === action.payload.id
@@ -45,12 +48,16 @@ function polygonReducer(state: PolygonState, action: PolygonAction): PolygonStat
             : polygon
         )
       }
+      localStorage.setItem('saved-polygons', JSON.stringify(updatedState.polygons))
+      return updatedState
     case 'DELETE_POLYGON':
-      return {
+      const deletedState = {
         ...state,
         polygons: state.polygons.filter(polygon => polygon.id !== action.payload),
         selectedPolygonId: state.selectedPolygonId === action.payload ? null : state.selectedPolygonId
       }
+      localStorage.setItem('saved-polygons', JSON.stringify(deletedState.polygons))
+      return deletedState
     case 'SELECT_POLYGON':
       return {
         ...state,
@@ -61,6 +68,11 @@ function polygonReducer(state: PolygonState, action: PolygonAction): PolygonStat
         ...state,
         drawingMode: !state.drawingMode,
         selectedPolygonId: null
+      }
+    case 'LOAD_POLYGONS':
+      return {
+        ...state,
+        polygons: action.payload
       }
     default:
       return state
@@ -74,6 +86,22 @@ const PolygonContext = createContext<{
 
 export function PolygonProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(polygonReducer, initialState)
+
+  useEffect(() => {
+    const savedPolygons = localStorage.getItem('saved-polygons')
+    if (savedPolygons) {
+      try {
+        const parsedPolygons = JSON.parse(savedPolygons)
+        const polygonsWithDates = parsedPolygons.map((polygon: any) => ({
+          ...polygon,
+          createdAt: new Date(polygon.createdAt)
+        }))
+        dispatch({ type: 'LOAD_POLYGONS', payload: polygonsWithDates })
+      } catch (error) {
+        console.error('Error loading saved polygons:', error)
+      }
+    }
+  }, [])
 
   return (
     <PolygonContext.Provider value={{ state, dispatch }}>

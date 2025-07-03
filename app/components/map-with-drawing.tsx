@@ -112,6 +112,14 @@ export default function MapWithDrawing({ initialCenter }: MapWithDrawingProps) {
         center={mapCenter}
         zoom={13}
         onLoad={onMapLoad}
+        options={{
+          streetViewControl: false,
+          fullscreenControl: false,
+          mapTypeControl: false,
+          zoomControl: true,
+          scaleControl: false,
+          rotateControl: false
+        }}
       >
         {state.polygons.map((polygon) => (
           <div key={polygon.id}>

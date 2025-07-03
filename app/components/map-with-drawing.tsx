@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef } from 'react'
-import { GoogleMap, Polygon } from '@react-google-maps/api'
+import { GoogleMap, Polygon, InfoWindow } from '@react-google-maps/api'
 import { usePolygon } from '../lib/polygon-context'
 import { useGoogleMaps } from '../lib/google-maps-provider'
 import { Button } from './ui/button'
@@ -74,6 +74,18 @@ export default function MapWithDrawing({ initialCenter }: MapWithDrawingProps) {
     dispatch({ type: 'SELECT_POLYGON', payload: polygonId })
   }
 
+  const getPolygonCenter = (coordinates: { lat: number; lng: number }[]) => {
+    if (coordinates.length === 0) return { lat: 0, lng: 0 }
+    
+    const totalLat = coordinates.reduce((sum, coord) => sum + coord.lat, 0)
+    const totalLng = coordinates.reduce((sum, coord) => sum + coord.lng, 0)
+    
+    return {
+      lat: totalLat / coordinates.length,
+      lng: totalLng / coordinates.length
+    }
+  }
+
   if (loadError) return <div className="text-red-500">Erro ao carregar mapa</div>
   if (!isLoaded) return <div className="text-gray-500">Carregando mapa...</div>
 
@@ -102,18 +114,34 @@ export default function MapWithDrawing({ initialCenter }: MapWithDrawingProps) {
         onLoad={onMapLoad}
       >
         {state.polygons.map((polygon) => (
-          <Polygon
-            key={polygon.id}
-            paths={polygon.coordinates}
-            options={{
-              fillColor: polygon.color,
-              fillOpacity: polygon.id === state.selectedPolygonId ? 0.5 : 0.3,
-              strokeColor: polygon.color,
-              strokeOpacity: 1,
-              strokeWeight: polygon.id === state.selectedPolygonId ? 3 : 2
-            }}
-            onClick={() => handlePolygonClick(polygon.id)}
-          />
+          <div key={polygon.id}>
+            <Polygon
+              paths={polygon.coordinates}
+              options={{
+                fillColor: polygon.color,
+                fillOpacity: polygon.id === state.selectedPolygonId ? 0.5 : 0.3,
+                strokeColor: polygon.color,
+                strokeOpacity: 1,
+                strokeWeight: polygon.id === state.selectedPolygonId ? 3 : 2
+              }}
+              onClick={() => handlePolygonClick(polygon.id)}
+            />
+            <InfoWindow
+              position={getPolygonCenter(polygon.coordinates)}
+              options={{
+                disableAutoPan: true,
+                headerDisabled: true,
+                pixelOffset: new window.google.maps.Size(0, 0)
+              }}
+            >
+              <div 
+                className="bg-white px-2 py-1 rounded shadow-sm border text-sm font-medium"
+                style={{ backgroundColor: 'rgba(255, 255, 255, 0.95)' }}
+              >
+                {polygon.label}
+              </div>
+            </InfoWindow>
+          </div>
         ))}
       </GoogleMap>
     </div>

@@ -1,6 +1,6 @@
 import { Edit3, Save, Trash2, X } from 'lucide-react'
 import { useState } from 'react'
-import { usePolygon } from '../contexts/polygon'
+import { formatArea, usePolygon } from '../contexts/polygon'
 import { useCenterOnPolygon } from './map-with-drawing'
 import { Button } from './ui/button'
 import { Input } from './ui/input'
@@ -84,69 +84,83 @@ export function PolygonManager() {
         {state.polygons.map((polygon) => (
           <div
             key={polygon.id}
-            className={`p-3 border rounded-lg cursor-pointer transition-all ${
+            className={`p-4 border rounded-lg cursor-pointer transition-all ${
               polygon.id === state.selectedPolygonId
-                ? 'border-blue-500 bg-blue-50'
-                : 'border-gray-200 hover:border-gray-300'
+                ? 'border-blue-500 bg-blue-50 shadow-md'
+                : 'border-gray-200 hover:border-gray-300 hover:shadow-sm'
             }`}
             onClick={() => handlePolygonSelect(polygon.id)}
           >
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3 flex-1">
-                <div
-                  className="w-4 h-4 rounded border border-gray-300"
-                  style={{ backgroundColor: polygon.color }}
-                />
-
-                {editingId === polygon.id ? (
-                  <div className="flex items-center gap-2 flex-1">
-                    <Input
-                      value={editLabel}
-                      onChange={(e) => setEditLabel(e.target.value)}
-                      className="flex-1"
-                      placeholder="Nome da área"
-                      autoFocus
-                    />
-                    <Button
-                      size="sm"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        handleSaveEdit()
-                      }}
-                    >
-                      <Save className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        handleCancelEdit()
-                      }}
-                    >
-                      <X className="w-4 h-4" />
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="flex-1">
-                    <div className="font-medium">{polygon.label}</div>
-                    <div className="text-sm text-gray-500">
-                      {polygon.coordinates.length} pontos
+            {editingId === polygon.id ? (
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <div
+                    className="w-4 h-4 rounded border border-gray-300 flex-shrink-0"
+                    style={{ backgroundColor: polygon.color }}
+                  />
+                  <Input
+                    value={editLabel}
+                    onChange={(e) => setEditLabel(e.target.value)}
+                    className="flex-1"
+                    placeholder="Nome da área"
+                    autoFocus
+                  />
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    size="sm"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      handleSaveEdit()
+                    }}
+                  >
+                    <Save className="w-4 h-4" />
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      handleCancelEdit()
+                    }}
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <div className="flex items-start gap-3">
+                  <div
+                    className="w-4 h-4 rounded border border-gray-300 flex-shrink-0 mt-0.5"
+                    style={{ backgroundColor: polygon.color }}
+                  />
+                  <div className="flex-1 min-w-0">
+                    <div className="font-semibold text-gray-900 truncate">
+                      {polygon.label}
+                    </div>
+                    <div className="text-sm text-gray-600 mt-1">
+                      <div className="flex items-center gap-4">
+                        <span className="font-medium text-blue-600">
+                          {formatArea(polygon.area)}
+                        </span>
+                        <span className="text-gray-500">
+                          {polygon.coordinates.length} pontos
+                        </span>
+                      </div>
                     </div>
                   </div>
-                )}
-              </div>
+                </div>
 
-              {editingId !== polygon.id && (
-                <div className="flex items-center gap-2">
+                <div className="flex items-center justify-between">
                   <div className="flex gap-1">
-                    {colors.map((color) => (
+                    {colors.slice(0, 6).map((color) => (
                       <button
                         key={color}
-                        className={`w-6 h-6 rounded border-2 ${
+                        className={`w-5 h-5 rounded-full border-2 transition-all ${
                           polygon.color === color
-                            ? 'border-gray-800'
-                            : 'border-gray-300'
+                            ? 'border-gray-800 scale-110'
+                            : 'border-gray-300 hover:border-gray-400'
                         }`}
                         style={{ backgroundColor: color }}
                         onClick={(e) => {
@@ -155,32 +169,51 @@ export function PolygonManager() {
                         }}
                       />
                     ))}
+                    <div className="flex gap-1 ml-1">
+                      {colors.slice(6).map((color) => (
+                        <button
+                          key={color}
+                          className={`w-5 h-5 rounded-full border-2 transition-all ${
+                            polygon.color === color
+                              ? 'border-gray-800 scale-110'
+                              : 'border-gray-300 hover:border-gray-400'
+                          }`}
+                          style={{ backgroundColor: color }}
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handleColorChange(polygon.id, color)
+                          }}
+                        />
+                      ))}
+                    </div>
                   </div>
 
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      handleStartEdit(polygon)
-                    }}
-                  >
-                    <Edit3 className="w-4 h-4" />
-                  </Button>
+                  <div className="flex items-center gap-1">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleStartEdit(polygon)
+                      }}
+                    >
+                      <Edit3 className="w-4 h-4" />
+                    </Button>
 
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      handleDeletePolygon(polygon.id)
-                    }}
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleDeletePolygon(polygon.id)
+                      }}
+                    >
+                      <Trash2 className="w-4 h-4 text-red-500" />
+                    </Button>
+                  </div>
                 </div>
-              )}
-            </div>
+              </div>
+            )}
           </div>
         ))}
       </div>

@@ -1,7 +1,11 @@
 import { GoogleMap, InfoWindow, Polygon } from '@react-google-maps/api'
 import { useCallback, useRef, useState } from 'react'
 import { useGoogleMaps } from '../contexts/google-maps'
-import { usePolygon } from '../contexts/polygon'
+import {
+  calculatePolygonArea,
+  formatArea,
+  usePolygon,
+} from '../contexts/polygon'
 import { LocationSearch } from './location-search'
 import { Button } from './ui/button'
 
@@ -62,12 +66,14 @@ export function MapWithDrawing({ initialCenter }: MapWithDrawingProps) {
             lng: pt.lng(),
           }))
 
+          const area = calculatePolygonArea(coords)
           const newPolygon = {
             id: crypto.randomUUID(),
             coordinates: coords,
             label: `Área ${state.polygons.length + 1}`,
             color: '#FF0000',
             createdAt: new Date(),
+            area: area,
           }
 
           dispatch({ type: 'ADD_POLYGON', payload: newPolygon })
@@ -214,10 +220,18 @@ export function MapWithDrawing({ initialCenter }: MapWithDrawingProps) {
               }}
             >
               <div
-                className="bg-white px-2 py-1 rounded shadow-sm border text-sm font-medium"
+                className="bg-white px-3 py-2 rounded shadow-lg border text-sm font-medium max-w-xs"
                 style={{ backgroundColor: 'rgba(255, 255, 255, 0.95)' }}
               >
-                {polygon.label}
+                <div className="font-semibold text-gray-800 mb-1">
+                  {polygon.label}
+                </div>
+                <div className="text-gray-600 text-xs">
+                  Área: {formatArea(polygon.area)}
+                </div>
+                <div className="text-gray-500 text-xs mt-1">
+                  {polygon.coordinates.length} pontos
+                </div>
               </div>
             </InfoWindow>
           </div>

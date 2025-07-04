@@ -1,8 +1,8 @@
-import { useState, useEffect, useCallback } from 'react'
 import { Search } from 'lucide-react'
+import { useCallback, useEffect, useState } from 'react'
+import { useGoogleMaps } from '../contexts/google-maps'
 import { Button } from './ui/button'
 import { Input } from './ui/input'
-import { useGoogleMaps } from '../lib/google-maps-provider'
 
 interface LocationResult {
   place_id: string
@@ -19,7 +19,7 @@ interface LocationSearchProps {
   onLocationSelect: (location: { lat: number; lng: number; address: string }) => void
 }
 
-export default function LocationSearch({ onLocationSelect }: LocationSearchProps) {
+export function LocationSearch({ onLocationSelect }: LocationSearchProps) {
   const { isLoaded } = useGoogleMaps()
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<LocationResult[]>([])

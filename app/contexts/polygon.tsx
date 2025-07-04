@@ -1,27 +1,21 @@
 import type { ReactNode } from 'react';
 import { createContext, useContext, useEffect, useReducer } from 'react';
 
-// Função para calcular a área de um polígono em metros quadrados
-export function calculatePolygonArea(
+// Função para calcular a área de um polígono usando Google Maps Geometry
+export async function calculatePolygonArea(
   coordinates: { lat: number; lng: number }[]
-): number {
+): Promise<number> {
   if (coordinates.length < 3) return 0
 
-  const earthRadius = 6371000
-  let area = 0
+  const { spherical } = (await google.maps.importLibrary(
+    'geometry'
+  )) as google.maps.GeometryLibrary
 
-  for (let i = 0; i < coordinates.length; i++) {
-    const j = (i + 1) % coordinates.length
-    const xi = coordinates[i].lng * (Math.PI / 180)
-    const yi = coordinates[i].lat * (Math.PI / 180)
-    const xj = coordinates[j].lng * (Math.PI / 180)
-    const yj = coordinates[j].lat * (Math.PI / 180)
+  const path = coordinates.map(
+    (coord) => new google.maps.LatLng(coord.lat, coord.lng)
+  )
 
-    area += xi * Math.sin(yj) - xj * Math.sin(yi)
-  }
-
-  area = Math.abs(area) / 2.0
-  return area * earthRadius * earthRadius
+  return spherical.computeArea(path)
 }
 
 // Função para formatar área em uma unidade legível
@@ -140,20 +134,28 @@ export function PolygonProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(polygonReducer, initialState)
 
   useEffect(() => {
-    const savedPolygons = localStorage.getItem('saved-polygons')
-    if (savedPolygons) {
-      try {
-        const parsedPolygons = JSON.parse(savedPolygons)
-        const polygonsWithDates = parsedPolygons.map((polygon: any) => ({
-          ...polygon,
-          createdAt: new Date(polygon.createdAt),
-          area: polygon.area || calculatePolygonArea(polygon.coordinates),
-        }))
-        dispatch({ type: 'LOAD_POLYGONS', payload: polygonsWithDates })
-      } catch (error) {
-        console.error('Error loading saved polygons:', error)
+    const loadPolygons = async () => {
+      const savedPolygons = localStorage.getItem('saved-polygons')
+      if (savedPolygons) {
+        try {
+          const parsedPolygons = JSON.parse(savedPolygons)
+          const polygonsWithDates = await Promise.all(
+            parsedPolygons.map(async (polygon: any) => ({
+              ...polygon,
+              createdAt: new Date(polygon.createdAt),
+              area:
+                polygon.area ||
+                (await calculatePolygonArea(polygon.coordinates)),
+            }))
+          )
+          dispatch({ type: 'LOAD_POLYGONS', payload: polygonsWithDates })
+        } catch (error) {
+          console.error('Error loading saved polygons:', error)
+        }
       }
     }
+
+    loadPolygons()
   }, [])
 
   return (

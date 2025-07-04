@@ -59,14 +59,14 @@ export function MapWithDrawing({ initialCenter }: MapWithDrawingProps) {
       window.google.maps.event.addListener(
         drawingManager,
         'polygoncomplete',
-        (polygon: any) => {
+        async (polygon: any) => {
           const path = polygon.getPath().getArray()
           const coords = path.map((pt: any) => ({
             lat: pt.lat(),
             lng: pt.lng(),
           }))
 
-          const area = calculatePolygonArea(coords)
+          const area = await calculatePolygonArea(coords)
           const newPolygon = {
             id: crypto.randomUUID(),
             coordinates: coords,

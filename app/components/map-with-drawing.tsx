@@ -27,7 +27,7 @@ export function MapWithDrawing({ initialCenter }: MapWithDrawingProps) {
 
   const { state, dispatch } = usePolygon()
   const [mapCenter, setMapCenter] = useState(initialCenter || center)
-  const [mapZoom, setMapZoom] = useState(13)
+  const [mapZoom, setMapZoom] = useState(16)
   const drawingManagerRef = useRef<any>(null)
   const mapRef = useRef<google.maps.Map | null>(null)
 
@@ -104,12 +104,13 @@ export function MapWithDrawing({ initialCenter }: MapWithDrawingProps) {
     const selectedPolygon = state.polygons.find((p) => p.id === polygonId)
     if (selectedPolygon && selectedPolygon.coordinates.length > 0) {
       const center = getPolygonCenter(selectedPolygon.coordinates)
+      const optimalZoom = calculateOptimalZoom(selectedPolygon.coordinates)
       setMapCenter(center)
-      setMapZoom(14)
+      setMapZoom(optimalZoom)
 
       if (mapRef.current) {
         mapRef.current.panTo(center)
-        mapRef.current.setZoom(14)
+        mapRef.current.setZoom(optimalZoom)
       }
     }
   }
@@ -124,6 +125,46 @@ export function MapWithDrawing({ initialCenter }: MapWithDrawingProps) {
       lat: totalLat / coordinates.length,
       lng: totalLng / coordinates.length,
     }
+  }
+
+  const calculateBounds = (coordinates: { lat: number; lng: number }[]) => {
+    if (coordinates.length === 0) return null
+
+    const lats = coordinates.map((coord) => coord.lat)
+    const lngs = coordinates.map((coord) => coord.lng)
+
+    return {
+      north: Math.max(...lats),
+      south: Math.min(...lats),
+      east: Math.max(...lngs),
+      west: Math.min(...lngs),
+    }
+  }
+
+  const calculateOptimalZoom = (
+    coordinates: { lat: number; lng: number }[]
+  ) => {
+    const bounds = calculateBounds(coordinates)
+    if (!bounds) return 16
+
+    const latDiff = bounds.north - bounds.south
+    const lngDiff = bounds.east - bounds.west
+    const maxDiff = Math.max(latDiff, lngDiff)
+
+    // Adicionando margem de 30% ao tamanho do polígono para dar "respiro"
+    const adjustedDiff = maxDiff * 1.3
+
+    // Calculando zoom baseado na diferença ajustada
+    let zoom = 16
+    if (adjustedDiff > 0.01) zoom = 12 // Área muito grande
+    else if (adjustedDiff > 0.005) zoom = 14 // Área grande
+    else if (adjustedDiff > 0.002) zoom = 16 // Área média
+    else if (adjustedDiff > 0.001) zoom = 17 // Área pequena
+    else if (adjustedDiff > 0.0005) zoom = 18 // Área muito pequena
+    else zoom = 19 // Área minúscula
+
+    // Garantindo que o zoom nunca seja menor que 10 nem maior que 20
+    return Math.max(10, Math.min(20, zoom))
   }
 
   const handleLocationSelect = (location: {
@@ -145,12 +186,13 @@ export function MapWithDrawing({ initialCenter }: MapWithDrawingProps) {
     const selectedPolygon = state.polygons.find((p) => p.id === polygonId)
     if (selectedPolygon && selectedPolygon.coordinates.length > 0) {
       const center = getPolygonCenter(selectedPolygon.coordinates)
+      const optimalZoom = calculateOptimalZoom(selectedPolygon.coordinates)
       setMapCenter(center)
-      setMapZoom(14)
+      setMapZoom(optimalZoom)
 
       if (mapRef.current) {
         mapRef.current.panTo(center)
-        mapRef.current.setZoom(14)
+        mapRef.current.setZoom(optimalZoom)
       }
     }
   }
